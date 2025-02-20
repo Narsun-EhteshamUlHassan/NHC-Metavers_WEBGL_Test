@@ -1,235 +1,122 @@
 <!DOCTYPE html>
 <html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | Learning_Project</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=960 height=600 tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">Learning_Project</div>
+      </div>
+    </div>
+    <script>
 
-<head>
-	<meta charset="utf-8">
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-	<title>NHC Metaverse</title>
-	<link rel="shortcut icon" href="TemplateData/logo.png">
-	<link rel="stylesheet" href="TemplateData/style.css">
-	<script src="AgoraWebSDK/libs/agora-extension-virtual-background.js"></script>
-	<script src="AgoraWebSDK/libs/virtualbackground.js"></script>
-	<script src="AgoraWebSDK/libs/databuilder.js"></script>
-	<script src="AgoraWebSDK/libs/clientmanager.js"></script>
-	<script src="AgoraWebSDK/libs/wglwrapper.js"></script>
-	<script src="AgoraWebSDK/libs/audioeffects.js"></script>
-	<script src="AgoraWebSDK/libs/eventmanager.js"></script>
-	<script src="AgoraWebSDK/libs/engineglobals.js"></script>
-	<script src="AgoraWebSDK/libs/watermark.js"></script>
-	<script src="AgoraWebSDK/libs/customvideo.js"></script>
-	<script src="AgoraWebSDK/libs/agorachannel.js"></script>
-	<script src="AgoraWebSDK/libs/multichannel.js"></script>
-	<script src="AgoraWebSDK/libs/audiosystem.js"></script>
-	<script src="AgoraWebSDK/libs/testing.js"></script>
-	<script src="AgoraWebSDK/libs/agorautils.js"></script>
-	<script src="AgoraWebSDK/libs/audiomixing.js"></script>
-	<script src="AgoraWebSDK/agorartcenginev2.js"></script>
-	<script src="AgoraRTC_N.js"></script>
-	<script src="AgoraWebSDK/libs/spatial-audio-main.js" type="module"></script>
-	<script src = "https://cdn.socket.io/socket.io-3.0.0.js"></script>
-	<script src="https://smtpjs.com/v3/smtp.js">
-	</script>
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      var warningBanner = document.querySelector("#unity-warning");
 
-</head>
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
 
-<body>
-<div id="unity-container" style="width: 100%; height: 100%">
-	<div id="custom-logo" hidden></div>
-	<div id="custom-loader" hidden>
-		<div class="fill"></div>
-		<div class="label"></div>
-	</div>
-	<div id="unity-fullscreen-button"></div>
-
-	<canvas id="unity-canvas" width="auto" height="auto"></canvas>
-	<div id="unity-mobile-warning">
-		<div class="warning-img">
-			<img src="./TemplateData/warning__sign.png" alt="" />
-		</div>
-		<! --   <div class="warning-text">
-		<h3>العالم الافتراضي غير متاح</h3>
-		<p>
-			الميتافرس غير متاح حاليًا على الهواتف المحمولة. للحصول على أفضل
-			تجربة، استخدم الإصدار الخاص بمتصفح الويب على سطح المكتب.
-		</p>
-	</div>-->
-	</div>
-</div>
-
-	<canvas
-			id="inMem_Canvas"
-			height="450"
-			width="450"
-			style="display: none"
-	></canvas>
-	<canvas
-			id="myCanvas"
-			height="450"
-			width="450"
-			style="display: none"
-	></canvas>
-
-	<div>
-		<div id="client-stats" class="stats"></div>
-		<div class="row video-group">
-			<div class="col">
-				<p id="local-player-name" class="player-name"></p>
-				<div class="player-with-stats">
-					<div id="local-player" class="player"></div>
-					<div id="local-stats" class="stream-stats stats"></div>
-				</div>
-			</div>
-			<div class="w-100"></div>
-			<div class="col">
-				<div id="remote-playerlist"></div>
-			</div>
-		</div>
-	</div>
-
-	<script>
-		var unityInstance;
-		var mainCanvas = document.getElementById("myCanvas");
-		var mainContext = mainCanvas.getContext('2d');
-		var inMemCanvas = document.getElementById("inMem_Canvas");
-		var inMemContext = inMemCanvas.getContext('2d');
-		var canvasWidth = mainCanvas.width;
-		var canvasHeight = mainCanvas.height;
-		var angle = 0;
-
-		var buildUrl = "Build";
-		var loaderUrl = buildUrl + "/NHC-Metavers_WEBGL_Test.loader.js";
-		var config = {
-			dataUrl: buildUrl + "/NHC-Metavers_WEBGL_Test.data.unityweb",
-			frameworkUrl: buildUrl + "/NHC-Metavers_WEBGL_Test.framework.js.unityweb",
-			codeUrl: buildUrl + "/NHC-Metavers_WEBGL_Test.wasm.unityweb",
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Build.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/Build.data.gz",
+        frameworkUrl: buildUrl + "/Build.framework.js.gz",
+        codeUrl: buildUrl + "/Build.wasm.gz",
         streamingAssetsUrl: "StreamingAssets",
-			companyName: "NARSUN Studios",
-			productName: "NHC Metaverse",
-			productVersion: "0.12",
-		};
+        companyName: "DefaultCompany",
+        productName: "Learning_Project",
+        productVersion: "0.1",
+        showBanner: unityShowBanner,
+      };
 
-		var customLogo = document.getElementById("custom-logo");
-		var customLoader = document.getElementById("custom-loader");
-		var customBar = document.querySelector(".fill");
-		var container = document.querySelector("#unity-container");
-		var canvas = document.querySelector("#unity-canvas");
-		var loadingBar = document.querySelector("#unity-loading-bar");
-		var progressBarFull = document.querySelector("#unity-progress-bar-full");
-		var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-		var mobileWarning = document.querySelector("#unity-mobile-warning");
+      // By default, Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
 
-		// get location param 'q' to unity
-		function getParams() {
-			// Get the query string from the URL
-			var queryString = window.location.search;
-			console.log(
-					"queryString: ",
-					queryString,
-					" window.location.href= ",
-					window.location.href
-			);
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
 
-			// Parse the query string to get individual parameters
-			var params = new URLSearchParams(queryString);
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        container.className = "unity-mobile";
+        canvas.className = "unity-mobile";
 
-			// You can now access individual parameters using the get() method
-			var parameterValue = params.get("q");
-			console.log("parameterValue: ", parameterValue);
+        // To lower canvas resolution on mobile devices to gain some
+        // performance, uncomment the following line:
+        // config.devicePixelRatio = 1;
 
-			return parameterValue;
-		}
 
-		// getParams()
+      } else {
+        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
 
-		function sendEmail(companyEmail) {
-			Email.send({
-				Host: "smtp.gmail.com",
-				Username: "shoaibmansoor@narsunstudios.com",
-				Password: "Narsun@12321",
-				To: companyEmail,
-				From: "shoaibmansoor@narsunstudios.com",
-				Subject: "Sending Email using javascript",
-				Body: "Well that was easy!!",
+        canvas.style.width = "960px";
+        canvas.style.height = "600px";
+      }
 
-			})
-					.then(function (message) {
-						alert("Mail has been sent successfully")
-					});
-		}
+      loadingBar.style.display = "block";
 
-		if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-			container.className = "unity-mobile";
-			config.devicePixelRatio = 1;
-			mobileWarning.style.display = "block";
-			//setTimeout(() => {
-			mobileWarning.style.display = "block";
-			//}, 5000);
-		} else {
-			canvas.style.width = "100%";
-			canvas.style.height = "100%";
-			//mobileWarning.style.display = "none";
-			mobileWarning.style.display = "none";
-		}
-		customLogo.style.display = "block";
-		customLoader.style.display = "block";
-		//loadingBar.style.display = "block";
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+              }).then((unityInstance) => {
+                loadingBar.style.display = "none";
+                fullscreenButton.onclick = () => {
+                  unityInstance.SetFullscreen(1);
+                };
+              }).catch((message) => {
+                alert(message);
+              });
+            };
 
-		var script = document.createElement("script");
-		script.src = loaderUrl;
-		script.onload = () => {
-			createUnityInstance(canvas, config, (progress) => {
-				customBar.style.width = 100 * progress + "%";
-			})
-					.then((unityInstance2) => {
-						unityInstance = unityInstance2;
-						window.unityInstance = unityInstance;
-						customLoader.style.display = "none";
-						customLogo.style.display = "none";
+      document.body.appendChild(script);
 
-						//send Query param 'q' to unity
-						//unityInstance2.SendMessage('[Game Initializer Logic]','queryParams' , 'AdERohXw6MbYcmf9TgpdDC4oLVbojH0n' );
-						unityInstance2.SendMessage(
-								"GameLoader",
-								"queryParams",
-								getParams()
-						);
-
-						fullscreenButton.onclick = () => {
-							unityInstance2.SetFullscreen(1);
-						};
-					})
-					.catch((message) => {
-						alert(message);
-					});
-		};
-		document.body.appendChild(script);
-	</script>
-</script>
-<!-- <!-- The core Firebase JS SDK is always required and must be listed first --> -->
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-functions-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-storage-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-analytics-compat.js"></script>
-
-<script>
-// Your web app's Firebase configuration
-
-const firebaseConfig = {
-apiKey: "AIzaSyC0YkxMbqoft5girIkMIp6InvTN3Im9rdE",
-authDomain: "nhcmetaversemobile.firebaseapp.com",
-projectId: "nhcmetaversemobile",
-storageBucket: "nhcmetaversemobile.appspot.com",
-messagingSenderId: "1089644971593",
-appId: "1:1089644971593:web:9d58b21e2a60b2860fe198",
-measurementId: "G-TSV587T03W"
-};
-// Initialize Firebase
-const firebaseApp = firebase.initializeApp(firebaseConfig);
-const analytics = firebaseApp.analytics();
-</script>
-</body>
-
+    </script>
+  </body>
 </html>
