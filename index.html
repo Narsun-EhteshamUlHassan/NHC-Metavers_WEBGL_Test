@@ -1,94 +1,63 @@
-<!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity XNFT | Learning_Project<</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-  </head>
-  <body style="text-align: center; padding: 0; border: 0; margin: 0;">
-    <script src="Build/Build.loader.js"></script>
-    <div id="unity-container" class="unity-desktop">
-      <canvas id="unity-canvas" width=960 height=600></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
-        </div>
-      </div>
-    </div>
-    <script>
-      var container = document.querySelector("#unity-container");
-      var canvas = document.querySelector("#unity-canvas");
-      var loadingBar = document.querySelector("#unity-loading-bar");
-      var progressBarFull = document.querySelector("#unity-progress-bar-full");
-      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-      var warningBanner = document.querySelector("#unity-warning");
-      
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
-      function unityShowBanner(msg, type) {
-        function updateBannerVisibility() {
-          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
-        }
-        var div = document.createElement('div');
-        div.innerHTML = msg;
-        warningBanner.appendChild(div);
-        if (type == 'error') div.style = 'background: red; padding: 10px;';
-        else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-          setTimeout(function() {
-            warningBanner.removeChild(div);
-            updateBannerVisibility();
-          }, 5000);
-        }
-        updateBannerVisibility();
-      }
-      
-      var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/Build.loader.js";
-      var config = {
-        dataUrl: "Build/Build.data",
-        frameworkUrl: "Build/Build.framework.js",
-        codeUrl: "Build/Build.wasm",
-        streamingAssetsUrl: "StreamingAssets",
-        companyName: "DefaultCompany",
-        productName: "Learning_Project",
-        productVersion: "0.1",
-        showBanner: unityShowBanner,
-      };
-      
-      // Mobile device style: fill the whole browser client area with the game canvas:
-      var meta = document.createElement('meta');
-      meta.name = 'viewport';
-      meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-      document.getElementsByTagName('head')[0].appendChild(meta);
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>NHC Metaverse</title>
+		<link rel="shortcut icon" href="TemplateData/favicon.ico">	
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<script src="webglScreen.js"></script>
+	</head>
+	<body style="margin: 0; overflow:hidden">
+		<iframe id="Frame"  src="game.html" style="border-width:1px;position:absolute;"></iframe>
+		<script>
+			//开始时调用
+			window.gameframe = document.getElementById("Frame");
+			window.WebglOrientation=WebglScreenOrientation.AutoRotation
+			RotScreen()
+			window.addEventListener("resize", function () {
+				RotScreen();
+			})
+			window.addEventListener("orientationchange", function () {
+					RotScreen();
+			})
+		</script>
+		<script>
+			const Http = new XMLHttpRequest();
+			const url="StreamingAssets/webglscreenSetting/ScreenConfig.json";
+			// 创建一个新的 XMLHttpRequest 对象  
+			var xhr = new XMLHttpRequest();  
+			
+			// 设置请求类型为 GET，并指定请求的 URL  
+			
+			// 设置请求完成后的回调函数  
+			xhr.onreadystatechange = function () {  
+				// 检查请求是否成功完成（状态码为 200）  
+				if (xhr.readyState === 4 && xhr.status === 200) {  
+					// 读取响应文本  
+					var json = xhr.responseText;  
+					// 解析 JSON 字符串为 JavaScript 对象  
+					var data = JSON.parse(json);  
+					// 将解析后的数据中的 ScreenOrientation 赋值给 window.WebglOrientation  
+					window.WebglOrientation = data.ScreenOrientation;  
+					// 调用 RotScreen 函数（假设该函数已定义）  
+					RotScreen();  
+				}  
+			};  
+			xhr.open("GET", url, true);  
+			xhr.send()
+		</script>
 
-      var canvas = document.querySelector("#unity-canvas");
-      canvas.style.width = "100%";
-      canvas.style.height = "100%";
-      canvas.style.position = "fixed";
-
-      document.body.style.textAlign = "left";
-
-      loadingBar.style.display = "block";
-
-      var script = document.createElement("script");
-      script.src = loaderUrl;
-      script.onload = () => {
-        createUnityInstance(canvas, config, (progress) => {
-          progressBarFull.style.width = 100 * progress + "%";
-        }).then((unityInstance) => {
-          loadingBar.style.display = "none";
-        }).catch((message) => {
-          alert(message);
-        });
-      };
-      document.body.appendChild(script);
-    </script>
-  </body>
+		<script>
+			window.addEventListener("message", function (event) {
+				if (event.data === "BLANK_PAGE") {
+					window.location.href = "about:blank";
+				}
+			});
+		</script>
+		
+		<style>
+			
+		</style>
+	</body>
+	
 </html>
