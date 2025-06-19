@@ -1,63 +1,74 @@
-<html>
-	<head>
-		<meta charset="utf-8">
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>NHC Metaverse</title>
-		<link rel="shortcut icon" href="TemplateData/favicon.ico">	
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<script src="webglScreen.js"></script>
-	</head>
-	<body style="margin: 0; overflow:hidden">
-		<iframe id="Frame"  src="game.html" style="border-width:1px;position:absolute;"></iframe>
-		<script>
-			//开始时调用
-			window.gameframe = document.getElementById("Frame");
-			window.WebglOrientation=WebglScreenOrientation.AutoRotation
-			RotScreen()
-			window.addEventListener("resize", function () {
-				RotScreen();
-			})
-			window.addEventListener("orientationchange", function () {
-					RotScreen();
-			})
-		</script>
-		<script>
-			const Http = new XMLHttpRequest();
-			const url="StreamingAssets/webglscreenSetting/ScreenConfig.json";
-			// 创建一个新的 XMLHttpRequest 对象  
-			var xhr = new XMLHttpRequest();  
-			
-			// 设置请求类型为 GET，并指定请求的 URL  
-			
-			// 设置请求完成后的回调函数  
-			xhr.onreadystatechange = function () {  
-				// 检查请求是否成功完成（状态码为 200）  
-				if (xhr.readyState === 4 && xhr.status === 200) {  
-					// 读取响应文本  
-					var json = xhr.responseText;  
-					// 解析 JSON 字符串为 JavaScript 对象  
-					var data = JSON.parse(json);  
-					// 将解析后的数据中的 ScreenOrientation 赋值给 window.WebglOrientation  
-					window.WebglOrientation = data.ScreenOrientation;  
-					// 调用 RotScreen 函数（假设该函数已定义）  
-					RotScreen();  
-				}  
-			};  
-			xhr.open("GET", url, true);  
-			xhr.send()
-		</script>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Unity WebGL Build</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+      }
+      #unity-container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+        touch-action: none;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      #webInput {
+        position: absolute;
+        top: 40%;
+        left: 10%;
+        width: 80%;
+        height: 40px;
+        font-size: 20px;
+        z-index: 9999;
+        display: none;
+        border: 1px solid #ccc;
+        padding: 5px 10px;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.2);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="unity-container">
+      <canvas id="unity-canvas"></canvas>
+      <input id="webInput" type="text" oninput="sendToUnity()" />
+    </div>
 
-		<script>
-			window.addEventListener("message", function (event) {
-				if (event.data === "BLANK_PAGE") {
-					window.location.href = "about:blank";
-				}
-			});
-		</script>
-		
-		<style>
-			
-		</style>
-	</body>
-	
+    <script src="Build/UnityLoader.js"></script>
+    <script>
+      var unityInstance = UnityLoader.instantiate("unity-container", "Build/Build.json");
+
+      function ShowInput(currentValue) {
+        const input = document.getElementById("webInput");
+        input.value = currentValue;
+        input.style.display = "block";
+        input.focus();
+
+        // Scroll to center (for iOS keyboard)
+        setTimeout(() => {
+          input.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 300);
+      }
+
+      function HideInput() {
+        document.getElementById("webInput").style.display = "none";
+      }
+
+      function sendToUnity() {
+        const value = document.getElementById("webInput").value;
+        if (typeof unityInstance !== "undefined") {
+          unityInstance.SendMessage("WebInputHandler", "SetTextFromWeb", value);
+        }
+      }
+    </script>
+  </body>
 </html>
